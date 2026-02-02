@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>危險實驗室：原理大揭秘 v2.2</title>
+    <title>科學實驗室：閉合電路示範 v2.9</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -58,29 +58,52 @@
 
         button:active { transform: translateY(3px); box-shadow: none; }
 
-        #btn-safe { background-color: #2ecc71; } /* 綠色 */
-        #btn-open { background-color: #f39c12; } /* 橙色 */
-        #btn-short { background-color: #e74c3c; } /* 紅色 */
-
+        #btn-safe { background-color: #2ecc71; }
+        #btn-open { background-color: #f39c12; }
+        #btn-short { background-color: #e74c3c; }
         #btn-short.active { animation: pulse-btn 1s infinite; }
-
         @keyframes pulse-btn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* 溫度計 */
-        #temp-container {
+        /* 溫度計樣式 */
+        #temp-wrapper {
             position: absolute;
-            right: 20px; top: 20px; width: 30px; height: 150px;
-            background: #fff; border-radius: 15px; border: 2px solid #000; padding: 3px;
+            right: 30px; top: 30px;
+            width: 40px; height: 160px;
+            display: flex; flex-direction: column; align-items: center;
         }
-        #temp-bar {
-            width: 100%; height: 10%;
-            background: linear-gradient(to top, #3498db, #f1c40f, #e74c3c);
-            border-radius: 10px; position: absolute; bottom: 3px; left: 3px; width: calc(100% - 6px);
-            transition: height 0.5s;
+        
+        #temp-glass {
+            width: 14px; height: 130px;
+            background: rgba(236, 240, 241, 0.9);
+            border: 2px solid #bdc3c7;
+            border-radius: 10px 10px 0 0;
+            position: relative;
+            z-index: 2;
         }
-        .temp-label { position: absolute; bottom: -25px; left: -10px; width: 60px; font-size: 0.8rem; text-align: center; color: white; font-weight: bold;}
 
-        /* 警告紅光 */
+        #temp-bar {
+            width: 6px; 
+            background: #e74c3c;
+            position: absolute; 
+            bottom: 0; left: 50%; transform: translateX(-50%);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.2s;
+            max-height: 125px;
+        }
+
+        #temp-bulb {
+            width: 28px; height: 28px;
+            background: radial-gradient(circle at 35% 35%, #ff7675, #c0392b);
+            border-radius: 50%;
+            border: 2px solid #c0392b;
+            margin-top: -8px;
+            z-index: 3;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .tick { position: absolute; left: 2px; width: 6px; height: 1px; background: #95a5a6; }
+        .temp-label { position: absolute; bottom: -30px; width: 60px; font-size: 0.8rem; text-align: center; color: white; font-weight: bold;}
+
         #warning-overlay {
             display: none;
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -90,57 +113,39 @@
         }
         @keyframes flash { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
 
-        /* 狀態文字 */
         #status-text {
-            position: absolute; top: 10px; left: 20px;
+            position: absolute; top: 15px; left: 20px;
             font-size: 1.2rem; font-weight: bold; color: #2ecc71; text-shadow: 1px 1px 2px black;
-        }
-
-        /* NEW: 解釋框 (Explanation Box) */
-        #explain-box {
-            display: none;
-            position: absolute;
-            bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: #f1c40f;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            border: 2px solid #f1c40f;
-            text-align: center;
-            width: 80%;
-            pointer-events: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
     </style>
 </head>
 <body>
 
-    <h2>⚡ 電路實驗室：原理大揭秘 ⚡</h2>
+    <h2>⚡ 電路實驗室 v2.9</h2>
 
     <div id="sim-container">
         <canvas id="simCanvas"></canvas>
-        
         <div id="status-text">狀態：閉合電路 (正常)</div>
         
-        <div id="temp-container">
-            <div id="temp-bar"></div>
-            <div class="temp-label">溫度計</div>
+        <div id="temp-wrapper">
+            <div id="temp-glass">
+                <div id="temp-bar" style="height: 10%;"></div>
+                <div class="tick" style="bottom: 20%"></div>
+                <div class="tick" style="bottom: 40%"></div>
+                <div class="tick" style="bottom: 60%"></div>
+                <div class="tick" style="bottom: 80%"></div>
+            </div>
+            <div id="temp-bulb"></div>
+            <div class="temp-label">溫度</div>
         </div>
         
         <div id="warning-overlay"></div>
-
-        <!-- 解釋框 -->
-        <div id="explain-box">
-            💡 電流特性：<br>電流像懶惰的人，會自動選擇<br>「阻力最小的捷徑」通過！
-        </div>
     </div>
 
     <div class="controls">
-        <button id="btn-safe" onclick="setMode('safe')">⭕ 閉合電路 (亮)</button>
-        <button id="btn-open" onclick="setMode('open')">❌ 斷路 (不亮)</button>
-        <button id="btn-short" onclick="setMode('short')">🚨 短路 (危險)</button>
+        <button id="btn-safe" onclick="setMode('safe')">⭕ 閉合電路</button>
+        <button id="btn-open" onclick="setMode('open')">❌ 斷路</button>
+        <button id="btn-short" onclick="setMode('short')">🚨 短路</button>
     </div>
 
     <script>
@@ -155,37 +160,110 @@
         let sparks = [];
         let shakeOffset = { x: 0, y: 0 };
         
-        // 座標定義
-        const batteryPos = { x: 80, y: 150, w: 60, h: 100 };
-        const wireStart = { x: 110, y: 140 }; // 電池正極
-        const wireEnd = { x: 110, y: 255 };   // 電池負極
-        const bulbPos = { x: 480, y: 197 };   
-        const bulbWireTop = { x: 480, y: 140 };
-        const bulbWireBot = { x: 480, y: 255 };
-        const shortX = 300; 
-
-        // 路徑長度
-        const PATH_LEN_SAFE = 970;
-        const PATH_LEN_SHORT = 610;
+        // --- 核心坐標定義 (v2.9 橫向佈局) ---
+        // 1. 電池
+        const batX = 50;
+        const batY = 150;
+        const batW = 60;
+        const batH = 100;
         
-        const PARTICLE_COUNT = 45; 
+        // 電極接點
+        const wireStart = { x: 80, y: 140 }; // 正極 (上) - 電池頂部金屬帽
+        const wireEnd = { x: 80, y: 255 };   // 負極 (下) - 電池底部
+        
+        // 2. 燈泡 (橫放)
+        const bulbTipX = 350;
+        const bulbTipY = 200; // 燈泡中心軸
+        const bulbEntry = { x: 375, y: 180 }; // 上方支架進入點 (側接點)
+        
+        // 電線轉角點
+        const cornerTopRight = { x: 375, y: 140 }; 
+        const cornerBotRight = { x: 350, y: 255 }; 
 
-        // 初始化粒子 (確保間距一致)
-        function initParticles(targetMode) {
-            particles = [];
-            let totalLen = (targetMode === 'short') ? PATH_LEN_SHORT : PATH_LEN_SAFE;
-            let spacing = totalLen / PARTICLE_COUNT;
+        // 3. 燈泡內部關鍵點
+        const pBulb1 = { x: 375, y: 180 }; // 入口
+        const pBulb2 = { x: 420, y: 180 }; 
+        const pBulb3 = { x: 430, y: 175 }; 
+        const pBulb4 = { x: 450, y: 185 }; 
+        const pBulb5 = { x: 430, y: 200 }; 
+        const pBulb6 = { x: 450, y: 215 }; 
+        const pBulb7 = { x: 430, y: 225 }; 
+        const pBulb8 = { x: 350, y: 200 }; 
+
+        // 4. 短路橋
+        const shortX = 200; 
+
+        // --- 路徑段長度計算 ---
+        let pathSegments = [];
+
+        function buildPath() {
+            pathSegments = [];
+            // 1. Top Wire: Start (+) -> CornerTop
+            pathSegments.push({ start: wireStart, end: cornerTopRight });
             
-            for(let i=0; i < PARTICLE_COUNT; i++) {
+            // 2. Down to Bulb: CornerTop -> BulbEntry
+            pathSegments.push({ start: cornerTopRight, end: bulbEntry });
+
+            if(mode === 'short') {
+                // 短路模式路徑 (正 -> 負)
+                pathSegments = [];
+                // 1. 正極向右到短路點 (Top)
+                pathSegments.push({ start: wireStart, end: {x: shortX, y: 140} });
+                // 2. 向下穿過短路橋 (Down) -> 這是關鍵方向
+                pathSegments.push({ start: {x: shortX, y: 140}, end: {x: shortX, y: 255} });
+                // 3. 向左回到負極 Y 軸 (Bottom)
+                pathSegments.push({ start: {x: shortX, y: 255}, end: wireEnd });
+                // 4. 向上穿過電池內部回到正極 (Loop)
+                pathSegments.push({ start: wireEnd, end: wireStart });
+            } else {
+                // 正常模式
+                pathSegments.push({ start: pBulb1, end: pBulb2 });
+                pathSegments.push({ start: pBulb2, end: pBulb3 });
+                pathSegments.push({ start: pBulb3, end: pBulb4 });
+                pathSegments.push({ start: pBulb4, end: pBulb5 });
+                pathSegments.push({ start: pBulb5, end: pBulb6 });
+                pathSegments.push({ start: pBulb6, end: pBulb7 });
+                pathSegments.push({ start: pBulb7, end: pBulb8 });
+
+                // 回流
+                pathSegments.push({ start: pBulb8, end: cornerBotRight });
+                pathSegments.push({ start: cornerBotRight, end: wireEnd });
+                pathSegments.push({ start: wireEnd, end: wireStart });
+            }
+
+            // 計算總長度
+            let totalLen = 0;
+            pathSegments.forEach(seg => {
+                const dx = seg.end.x - seg.start.x;
+                const dy = seg.end.y - seg.start.y;
+                seg.len = Math.sqrt(dx*dx + dy*dy);
+                seg.accumStart = totalLen;
+                totalLen += seg.len;
+            });
+            return totalLen;
+        }
+
+        let totalPathLen = buildPath();
+
+        function initParticles() {
+            particles = [];
+            totalPathLen = buildPath(); 
+            
+            // v2.9: 調整短路時的粒子數量，避免視覺錯覺
+            // 減少數量，增加間距，確保眼睛能追蹤到向前的移動
+            let count = (mode === 'short') ? 25 : 50; 
+            let spacing = totalPathLen / count;
+            
+            for(let i=0; i < count; i++) {
                 particles.push({
-                    dist: i * spacing, // 均勻分佈
-                    // Fix 1: 調整短路速度由 25 -> 10，避免頻閃錯覺，看起來更流暢
-                    speed: (targetMode === 'short') ? 10 : 3 
+                    dist: i * spacing, 
+                    // 初始速度
+                    speed: (mode === 'short') ? 8 : 3.5 
                 });
             }
         }
 
-        initParticles('safe');
+        initParticles();
 
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -194,245 +272,227 @@
             if(mode === 'short' && temperature > 50) {
                 shakeOffset.x = (Math.random() - 0.5) * 5;
                 shakeOffset.y = (Math.random() - 0.5) * 5;
-            } else {
-                shakeOffset = {x:0, y:0};
-            }
+            } else { shakeOffset = {x:0, y:0}; }
 
             ctx.save();
             ctx.translate(shakeOffset.x, shakeOffset.y);
 
-            drawWires();
+            drawWires(); 
             drawBattery();
-            drawBulb();
-            drawSwitch();
+            drawBulbHorizontal(); 
             drawParticles();
             drawSparks();
 
             ctx.restore();
 
-            if(mode === 'short' && temperature > 80) {
-                drawWarningText();
-            }
+            if(mode === 'short' && temperature > 80) drawWarningText();
             requestAnimationFrame(animate);
         }
 
         function updatePhysics() {
-            // 溫度
-            if(mode === 'short') { 
-                if(temperature < 100) temperature += 0.5; 
-            } else { 
-                if(temperature > 10) temperature -= 1; 
-            }
+            if(mode === 'short') { if(temperature < 100) temperature += 0.5; } 
+            else { if(temperature > 10) temperature -= 1; }
             
-            document.getElementById('temp-bar').style.height = temperature + '%';
+            let h = 10 + (temperature * 0.9);
+            document.getElementById('temp-bar').style.height = h + '%';
             document.getElementById('warning-overlay').style.display = (temperature > 85) ? 'block' : 'none';
 
-            let targetSpeed = 0;
-            let maxDist = PATH_LEN_SAFE; 
-
-            if(mode === 'safe') {
-                targetSpeed = 3; 
-                maxDist = PATH_LEN_SAFE;
-            } else if (mode === 'short') {
-                targetSpeed = 10; // Fix 1: 降低最大速度，防止視覺上看起來靜止
-                maxDist = PATH_LEN_SHORT;
-            } else {
-                targetSpeed = 0;
-                maxDist = PATH_LEN_SAFE;
-            }
-
+            // v2.9: 調整目標速度，避免 Stroboscopic Effect (頻閃錯覺)
+            // 速度 8 配合較寬的間距，可以清楚看到向前移動
+            let targetSpeed = (mode === 'short') ? 8 : (mode === 'open' ? 0 : 3.5);
+            
             particles.forEach(p => {
                 p.speed += (targetSpeed - p.speed) * 0.1;
                 p.dist += p.speed;
-                if(p.dist > maxDist) p.dist = 0;
+                if(p.dist >= totalPathLen) p.dist -= totalPathLen;
             });
 
             if(temperature > 80 && Math.random() > 0.6) createSpark();
             updateSparks();
         }
 
+        function getPositionAtDist(d) {
+            let seg = pathSegments.find(s => d >= s.accumStart && d < s.accumStart + s.len);
+            if(!seg) seg = pathSegments[pathSegments.length-1];
+            let localD = d - seg.accumStart;
+            let ratio = localD / seg.len;
+            return {
+                x: seg.start.x + (seg.end.x - seg.start.x) * ratio,
+                y: seg.start.y + (seg.end.y - seg.start.y) * ratio
+            };
+        }
+
         function drawWires() {
-            // 電線變色邏輯 (藍 -> 紅 -> 白)
-            let r = 52 + (temperature * 2);
-            let g = 152 - (temperature * 1.5);
-            let b = 219 - (temperature * 2);
-            
-            // Fix 2: 限制最亮顏色為淺粉紅，不要純白，避免與白色粒子混淆
-            // 但如果粒子改了顏色，這裡可以保持白熱化
-            if(temperature > 90) { r=255; g=200; b=200; } 
+            let r = 50, g = 50, b = 50; 
+            if(mode !== 'open') { 
+                r = 52 + (temperature * 2);
+                g = 152 - (temperature * 1.5);
+                b = 219 - (temperature * 2);
+                if(temperature > 90) { r=255; g=200; b=200; }
+            } else { r = 100; g = 100; b = 100; }
             
             ctx.strokeStyle = `rgb(${r},${g},${b})`;
             ctx.lineWidth = 8;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            
             ctx.shadowBlur = (temperature > 50) ? temperature / 2 : 0;
             ctx.shadowColor = 'orange';
 
-            ctx.beginPath();
+            if(mode !== 'short') {
+                ctx.beginPath();
+                ctx.moveTo(wireStart.x, wireStart.y);
+                
+                if(mode === 'open') {
+                    ctx.lineTo(160, wireStart.y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(220, wireStart.y);
+                    ctx.lineTo(cornerTopRight.x, cornerTopRight.y);
+                    ctx.lineTo(bulbEntry.x, bulbEntry.y);
+                    ctx.stroke();
+                    ctx.fillStyle = '#bdc3c7';
+                    ctx.beginPath(); ctx.arc(160, wireStart.y, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(220, wireStart.y, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = `rgb(${r},${g},${b})`;
+                } else {
+                    ctx.lineTo(cornerTopRight.x, cornerTopRight.y);
+                    ctx.lineTo(bulbEntry.x, bulbEntry.y);
+                    ctx.stroke();
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(bulbTipX, bulbTipY);
+                ctx.lineTo(cornerBotRight.x, cornerBotRight.y); 
+                ctx.lineTo(wireEnd.x, wireEnd.y); 
+                ctx.stroke();
+            }
             
-            // Top Wire
-            ctx.moveTo(wireStart.x, wireStart.y);
-            if(mode === 'open') {
-                ctx.lineTo(200, wireStart.y); 
-                ctx.moveTo(240, wireStart.y - 20); 
-                ctx.lineTo(bulbWireTop.x, wireStart.y); 
-            } else {
-                ctx.lineTo(bulbWireTop.x, wireStart.y);
-            }
-
-            // Bulb
-            ctx.lineTo(bulbWireBot.x, bulbWireBot.y); 
-
-            // Bottom Wire
-            ctx.lineTo(wireEnd.x, wireEnd.y);
-            ctx.lineTo(wireStart.x, wireEnd.y); 
-
-            // Short Bridge
             if(mode === 'short') {
-                ctx.moveTo(shortX, wireStart.y);
-                ctx.lineTo(shortX, wireEnd.y);
+                ctx.beginPath();
+                ctx.moveTo(wireStart.x, wireStart.y);
+                ctx.lineTo(shortX, wireStart.y);
+                ctx.lineTo(shortX, wireEnd.y); // 向下
+                ctx.lineTo(wireEnd.x, wireEnd.y);
                 ctx.lineWidth = 12;
+                ctx.stroke();
+                ctx.lineWidth = 8;
             }
 
-            ctx.stroke();
-            ctx.shadowBlur = 0; 
-            ctx.lineWidth = 8; 
-        }
-
-        function drawSwitch() {
-            if(mode !== 'open') return;
-            ctx.fillStyle = '#7f8c8d';
-            ctx.fillRect(190, wireStart.y - 5, 60, 10);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "#2c3e50";
+            ctx.beginPath(); ctx.arc(wireStart.x, wireStart.y, 6, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(wireEnd.x, wireEnd.y, 6, 0, Math.PI*2); ctx.fill();
+            if(mode !== 'short') {
+                 ctx.beginPath(); ctx.arc(bulbEntry.x, bulbEntry.y, 5, 0, Math.PI*2); ctx.fill();
+            }
         }
 
         function drawBattery() {
-            const x = batteryPos.x;
-            const y = batteryPos.y;
-            const w = batteryPos.w;
-            const h = batteryPos.h;
+            const x = batX, y = batY, w = batW, h = batH;
+            ctx.shadowBlur = 10; ctx.shadowColor = "rgba(0,0,0,0.3)";
 
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = "rgba(0,0,0,0.5)";
-
-            // 漸變色電池
+            const capW = 30;
+            ctx.fillStyle = "#d35400"; 
+            ctx.fillRect(x + (w-capW)/2, y - 10, capW, 10);
+            
             const gradBody = ctx.createLinearGradient(x, y, x + w, y);
-            gradBody.addColorStop(0, "#2c3e50"); gradBody.addColorStop(0.5, "#4ca1af"); gradBody.addColorStop(1, "#2c3e50");
-            
-            const gradGold = ctx.createLinearGradient(x, y, x+w, y);
-            gradGold.addColorStop(0, "#f1c40f"); gradGold.addColorStop(0.5, "#fceabb"); gradGold.addColorStop(1, "#f1c40f");
-            
-            const gradBlack = ctx.createLinearGradient(x, y, x+w, y);
-            gradBlack.addColorStop(0, "#000"); gradBlack.addColorStop(0.5, "#434343"); gradBlack.addColorStop(1, "#000");
-
-            ctx.fillStyle = gradGold; ctx.fillRect(x, y, w, h * 0.3);
-            ctx.fillStyle = gradBlack; ctx.fillRect(x, y + h * 0.3, w, h * 0.7);
-
-            ctx.fillStyle = "#d35400"; ctx.fillRect(x + w/4, y - 10, w/2, 10); // +
-            ctx.fillStyle = "#bdc3c7"; ctx.fillRect(x + 5, y + h, w - 10, 5);  // -
+            gradBody.addColorStop(0, "#f1c40f"); gradBody.addColorStop(1, "#f39c12");
+            ctx.fillStyle = gradBody; ctx.fillRect(x, y, w, h * 0.85); 
+            ctx.fillStyle = "#2c3e50"; ctx.fillRect(x, y + h * 0.85, w, h * 0.15); 
+            ctx.fillStyle = "#bdc3c7"; ctx.fillRect(x + 5, y + h, w - 10, 5);
 
             ctx.shadowBlur = 0;
-
-            ctx.fillStyle = "#d35400"; ctx.font = "bold 24px Arial"; ctx.fillText("+", x + w + 10, y + 25);
-            ctx.fillStyle = "#bdc3c7"; ctx.fillText("-", x + w + 10, y + h - 5);
-            
-            if(temperature > 90) {
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.4)'; ctx.fillRect(x, y-10, w, h+15);
-            }
+            ctx.fillStyle = "#d35400"; ctx.font = "bold 24px Arial"; ctx.fillText("+", x + w + 12, y + 20);
+            ctx.fillStyle = "#bdc3c7"; ctx.fillText("-", x + w + 12, y + h - 5);
         }
 
-        function drawBulb() {
-            const lx = bulbPos.x;
-            const ly = bulbPos.y;
+        function drawBulbHorizontal() {
+            const glassCx = 435; 
+            const glassCy = 200;
+            const r = 45;
 
-            ctx.fillStyle = '#7f8c8d'; ctx.fillRect(lx - 15, ly + 25, 30, 20);
-            ctx.fillStyle = '#2c3e50'; ctx.fillRect(lx - 10, ly + 45, 20, 10);
+            ctx.save();
+            ctx.beginPath(); ctx.arc(glassCx, glassCy, r, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; ctx.fill();
+            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; ctx.stroke();
+            ctx.beginPath(); ctx.arc(glassCx + 15, glassCy - 15, 10, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; ctx.fill();
+            ctx.restore();
+
+            ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 2;
+            ctx.beginPath(); 
+            ctx.moveTo(bulbEntry.x, bulbEntry.y); 
+            ctx.lineTo(pBulb2.x, pBulb2.y); 
+            ctx.lineTo(pBulb3.x, pBulb3.y); 
+            ctx.stroke();
 
             ctx.beginPath();
-            ctx.arc(lx, ly, 30, 0, Math.PI*2);
+            ctx.moveTo(pBulb3.x, pBulb3.y);
+            ctx.lineTo(pBulb4.x, pBulb4.y);
+            ctx.lineTo(pBulb5.x, pBulb5.y);
+            ctx.lineTo(pBulb6.x, pBulb6.y);
+            ctx.lineTo(pBulb7.x, pBulb7.y);
             
             if(mode === 'safe') {
-                ctx.fillStyle = '#f1c40f';
-                ctx.shadowBlur = 30; ctx.shadowColor = 'rgba(241, 196, 15, 0.8)';
+                ctx.strokeStyle = '#fff'; ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 25; ctx.lineWidth = 3;
             } else {
-                ctx.fillStyle = '#bdc3c7'; 
-                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#555'; ctx.shadowBlur = 0; ctx.lineWidth = 2;
             }
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            
-            ctx.beginPath();
-            ctx.strokeStyle = (mode === 'safe') ? '#fff' : '#555';
-            ctx.lineWidth = 2;
-            ctx.moveTo(lx, ly - 30); ctx.lineTo(lx - 10, ly); ctx.lineTo(lx + 10, ly); ctx.lineTo(lx, ly + 25);
-            ctx.stroke();
-        }
+            ctx.stroke(); ctx.shadowBlur = 0;
 
-        function getPositionAtDist(d) {
-            if(mode === 'short') {
-                if (d < 190) return { x: wireStart.x + d, y: wireStart.y }; 
-                if (d < 305) return { x: shortX, y: wireStart.y + (d - 190) }; 
-                if (d < 495) return { x: shortX - (d - 305), y: wireEnd.y }; 
-                return { x: wireEnd.x, y: wireEnd.y - (d - 495) }; 
-            } 
-            else {
-                if (d < 370) return { x: wireStart.x + d, y: wireStart.y }; 
-                if (d < 485) return { x: bulbWireTop.x, y: bulbWireTop.y + (d - 370) }; 
-                if (d < 855) return { x: bulbWireBot.x - (d - 485), y: bulbWireBot.y }; 
-                return { x: wireEnd.x, y: wireEnd.y - (d - 855) }; 
+            ctx.strokeStyle = '#7f8c8d';
+            ctx.beginPath();
+            ctx.moveTo(pBulb7.x, pBulb7.y);
+            ctx.lineTo(pBulb8.x, pBulb8.y);
+            ctx.stroke();
+
+            if(mode === 'safe') {
+                const glow = ctx.createRadialGradient(glassCx, glassCy, 10, glassCx, glassCy, 80);
+                glow.addColorStop(0, 'rgba(241, 196, 15, 0.5)'); glow.addColorStop(1, 'rgba(241, 196, 15, 0)');
+                ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(glassCx, glassCy, 90, 0, Math.PI*2); ctx.fill();
             }
+
+            const bX = 350 + 10; const bY = 200 - 20;
+            const gradMetal = ctx.createLinearGradient(bX, bY, bX, bY+40);
+            gradMetal.addColorStop(0, '#bdc3c7'); gradMetal.addColorStop(0.5, '#ecf0f1'); gradMetal.addColorStop(1, '#bdc3c7');
+            ctx.fillStyle = gradMetal; ctx.fillRect(bX, bY, 30, 40);
+            
+            ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(bX+10, bY); ctx.lineTo(bX+10, bY+40);
+            ctx.moveTo(bX+20, bY); ctx.lineTo(bX+20, bY+40);
+            ctx.stroke();
+
+            ctx.fillStyle = '#2c3e50'; 
+            ctx.beginPath(); ctx.moveTo(bX, bY+5); ctx.lineTo(bX, bY+35); ctx.lineTo(350, 200); ctx.fill();
+            
+            ctx.fillStyle = '#95a5a6'; 
+            ctx.beginPath(); ctx.arc(350, 200, 5, 0, Math.PI*2); ctx.fill();
         }
 
         function drawParticles() {
             if(mode === 'open') return;
 
             particles.forEach(p => {
-                const pos = getPositionAtDist(p.dist);
-                if(pos.x === wireEnd.x && pos.y > wireStart.y && pos.y < wireEnd.y) return;
+                let pos = getPositionAtDist(p.dist);
+                
+                // 隱藏在電池內部的粒子
+                if(pos.x === 80 && pos.y > 150 && pos.y < 250) return;
 
                 ctx.beginPath();
-                ctx.arc(pos.x, pos.y, 6, 0, Math.PI*2);
+                ctx.arc(pos.x, pos.y, 5, 0, Math.PI*2);
                 
-                // Fix 2: 短路時使用深紅色粒子 (e74c3c)，確保在白熱化電線上依然可見
-                // 正常時使用橙色 (e67e22)
-                ctx.fillStyle = (mode === 'short') ? '#c0392b' : '#e67e22'; 
+                ctx.fillStyle = (mode === 'short') ? '#c0392b' : '#f39c12'; 
+                if(mode === 'safe' && p.dist > 350 && p.dist < 600) ctx.fillStyle = '#fff';
+                
                 ctx.fill();
-            });
-        }
-
-        function createSpark() {
-            sparks.push({
-                x: shortX + (Math.random()-0.5)*20, 
-                y: 140 + Math.random() * 115,
-                vx: (Math.random() - 0.5) * 5,
-                vy: (Math.random() - 2) * 5,
-                life: 1.0
-            });
-        }
-
-        function updateSparks() {
-            for(let i=sparks.length-1; i>=0; i--) {
-                let s = sparks[i];
-                s.x += s.vx; s.y += s.vy; s.life -= 0.05;
-                if(s.life <= 0) sparks.splice(i, 1);
-            }
-        }
-
-        function drawSparks() {
-            sparks.forEach(s => {
-                ctx.globalAlpha = s.life;
-                ctx.fillStyle = `rgb(255, ${Math.floor(s.life * 200)}, 0)`;
-                ctx.beginPath(); ctx.arc(s.x, s.y, 5 * s.life, 0, Math.PI*2); ctx.fill();
-                ctx.globalAlpha = 1.0;
             });
         }
 
         function drawWarningText() {
             ctx.save();
             ctx.font = 'bold 60px Arial';
-            ctx.fillStyle = 'red';
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 5;
+            ctx.fillStyle = 'red'; ctx.strokeStyle = 'white'; ctx.lineWidth = 5;
             ctx.textAlign = 'center';
             ctx.translate(300, 200);
             ctx.rotate((Math.random()-0.5)*0.1);
@@ -441,32 +501,46 @@
             ctx.restore();
         }
 
-        function setMode(m) {
-            mode = m;
-            const status = document.getElementById('status-text');
-            const box = document.getElementById('explain-box'); // 提示框
-            const btns = document.querySelectorAll('button');
-            btns.forEach(b => b.classList.remove('active'));
+        function createSpark() {
+            sparks.push({ x: shortX + (Math.random()-0.5)*20, y: 140 + Math.random() * 115, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 2) * 5, life: 1.0 });
+        }
 
-            if(m === 'safe') {
-                status.innerText = "狀態：閉合電路 (正常)";
-                status.style.color = "#2ecc71";
-                box.style.display = 'none'; // 隱藏提示
-                initParticles('safe');
-            } else if (m === 'open') {
-                status.innerText = "狀態：斷路 (缺口)";
-                status.style.color = "#f39c12";
-                box.style.display = 'none'; // 隱藏提示
-            } else {
-                status.innerText = "狀態：短路 (危險！)";
-                status.style.color = "#e74c3c";
-                document.getElementById('btn-short').classList.add('active');
-                box.style.display = 'block'; // 顯示提示 (New!)
-                if(navigator.vibrate) navigator.vibrate([500, 200, 500]);
-                initParticles('short');
+        function updateSparks() {
+            for(let i=sparks.length-1; i>=0; i--) {
+                let s = sparks[i]; s.x += s.vx; s.y += s.vy; s.life -= 0.05;
+                if(s.life <= 0) sparks.splice(i, 1);
             }
         }
 
+        function drawSparks() {
+            sparks.forEach(s => {
+                ctx.globalAlpha = s.life; ctx.fillStyle = `rgb(255, ${Math.floor(s.life * 200)}, 0)`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, 5 * s.life, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1.0;
+            });
+        }
+
+        function setMode(m) {
+            mode = m;
+            const status = document.getElementById('status-text');
+            const btns = document.querySelectorAll('button');
+            btns.forEach(b => b.classList.remove('active'));
+
+            totalPathLen = buildPath();
+            initParticles();
+
+            if(m === 'safe') {
+                status.innerText = "狀態：閉合電路 (正常)"; status.style.color = "#2ecc71";
+            } else if (m === 'open') {
+                status.innerText = "狀態：斷路 (缺口)"; status.style.color = "#f39c12";
+            } else {
+                status.innerText = "狀態：短路 (危險！)"; status.style.color = "#e74c3c";
+                document.getElementById('btn-short').classList.add('active');
+                if(navigator.vibrate) navigator.vibrate([500, 200, 500]);
+            }
+        }
+
+        totalPathLen = buildPath();
         animate();
     </script>
 </body>
